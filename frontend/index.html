@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142d4e">
+  <title>Attendly · Student Attendance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <section class="login-shell">
+      <div class="login-art">
+        <div class="brand brand-light"><span class="brand-mark">A</span><span>attendly</span></div>
+        <div class="art-copy">
+          <span class="eyebrow">ENGINEERING · SEMESTER 03</span>
+          <h1>Every class<br>counts.</h1>
+          <p>A calmer, clearer way to keep your semester on track.</p>
+          <div class="art-stat"><div class="art-stat-icon">✓</div><div><strong>75% attendance goal</strong><span>Know where you stand, at a glance.</span></div></div>
+        </div>
+        <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+        <div class="art-footer">STUDENT ATTENDANCE MANAGEMENT SYSTEM</div>
+      </div>
+      <div class="login-panel">
+        <div class="mobile-brand brand"><span class="brand-mark">A</span><span>attendly</span></div>
+        <div class="login-intro"><span class="eyebrow">WELCOME BACK</span><h2>Sign in to your space</h2><p>Use your college email to continue.</p></div>
+        <form id="login-form">
+          <div class="role-switch" role="group" aria-label="Choose account type">
+            <button type="button" class="role-option active" data-role="STUDENT">Student</button>
+            <button type="button" class="role-option" data-role="TEACHER">Teacher</button>
+          </div>
+          <label for="email">College email</label>
+          <div class="input-wrap"><span class="input-icon">✉</span><input id="email" type="email" placeholder="you@college.edu" autocomplete="username" required></div>
+          <label for="password">Password</label>
+          <div class="input-wrap"><span class="input-icon">⌑</span><input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required></div>
+          <div class="form-row"><label class="check-label"><input type="checkbox" id="remember"> <span>Remember me</span></label><span class="secure-note">● Secure portal</span></div>
+          <button class="btn btn-primary btn-wide" type="submit">Sign in <span>↗</span></button>
+          <p class="login-error" id="login-error" aria-live="polite"></p>
+        </form>
+        <div class="demo-note"><span class="demo-dot"></span><div><strong>Preview mode</strong><p>Use any college email and password to explore the demo.</p></div></div>
+        <p class="login-legal">By continuing, you agree to your institution's acceptable-use policy.</p>
+      </div>
+    </section>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

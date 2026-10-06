@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: attendly-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: H2_CONSOLE_ENABLED
+        value: "false"
+      - key: DB_USERNAME
+        value: "sa"
+      - key: DB_PASSWORD
+        value: ""

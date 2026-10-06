@@ -1,0 +1,24 @@
+[build]
+  publish = "frontend"
+  command = "if [ -n \"$BACKEND_URL\" ]; then sed -i \"s|__BACKEND_URL__|${BACKEND_URL}|g\" netlify.toml; fi"
+
+# Keep /api on the Netlify domain while proxying to the public Spring Boot service.
+# Set BACKEND_URL in Netlify, for example: https://attendly-api.onrender.com
+[[redirects]]
+  from = "/api/*"
+  to = "__BACKEND_URL__/api/:splat"
+  status = 200
+  force = true
+
+# Single-page app fallback.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

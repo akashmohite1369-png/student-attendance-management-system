@@ -1,0 +1,17 @@
+# Java / Maven
+backend/target/
+backend/data/
+*.class
+
+# H2 local database
+*.mv.db
+*.trace.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
