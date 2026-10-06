@@ -3,6 +3,7 @@ const API_BASE = (window.ATTENDLY_CONFIG?.API_BASE || ((location.hostname === 'l
 let subjects = [];
 let students = [];
 let selectedRole = 'STUDENT';
+let authMode = 'LOGIN';
 let currentUser = null;
 let activePage = 'Overview';
 let attendanceDraft = {};
@@ -43,20 +44,31 @@ function loginView(errorMessage='') {
       </div><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-footer">STUDENT ATTENDANCE MANAGEMENT SYSTEM</div>
     </div>
     <div class="login-panel"><div class="mobile-brand brand"><span class="brand-mark">A</span><span>attendly</span></div>
-      <div class="login-intro"><span class="eyebrow">WELCOME BACK</span><h2>Sign in to your space</h2><p>Use your college email to continue.</p></div>
-      <form id="login-form">
-        <div class="role-switch"><button type="button" class="role-option ${selectedRole==='STUDENT'?'active':''}" data-role="STUDENT">Student</button><button type="button" class="role-option ${selectedRole==='TEACHER'?'active':''}" data-role="TEACHER">Teacher</button></div>
+      <div class="login-intro"><span class="eyebrow">${authMode==='LOGIN'?'WELCOME BACK':(selectedRole==='TEACHER'?'NEW FACULTY':'NEW STUDENT')}</span><h2>${authMode==='LOGIN'?'Sign in to your space':`Create your ${selectedRole==='TEACHER'?'faculty':'student'} account`}</h2><p>${authMode==='LOGIN'?'Use your college email to continue.':'Register once, then sign in from any device.'}</p></div>
+      <div class="role-switch"><button type="button" class="role-option ${selectedRole==='STUDENT'?'active':''}" data-role="STUDENT">Student</button><button type="button" class="role-option ${selectedRole==='TEACHER'?'active':''}" data-role="TEACHER">Teacher</button></div>
+      ${authMode==='REGISTER' ? `<form id="register-form">
+        <label for="reg-name">Full name</label><div class="input-wrap"><span class="input-icon">♙</span><input id="reg-name" type="text" placeholder="Your full name" autocomplete="name" required></div>
+        ${selectedRole==='STUDENT' ? '<label for="reg-roll">Roll number</label><div class="input-wrap"><span class="input-icon">#</span><input id="reg-roll" type="text" placeholder="e.g. 23CS006" autocomplete="off" required></div>' : ''}
+        <label for="reg-email">College email</label><div class="input-wrap"><span class="input-icon">✉</span><input id="reg-email" type="email" placeholder="you@college.edu" autocomplete="email" required></div>
+        <label for="reg-password">Password</label><div class="input-wrap"><span class="input-icon">⌑</span><input id="reg-password" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6" required></div>
+        <label for="reg-confirm">Confirm password</label><div class="input-wrap"><span class="input-icon">⌑</span><input id="reg-confirm" type="password" placeholder="Re-enter your password" autocomplete="new-password" minlength="6" required></div>
+        <div class="form-row"><span class="secure-note">● Password stored securely</span></div>
+        <button class="btn btn-primary btn-wide" type="submit">Create account <span>↗</span></button><p class="login-error" id="register-error" aria-live="polite">${esc(errorMessage)}</p>
+      </form>` : `<form id="login-form">
         <label for="email">College email</label><div class="input-wrap"><span class="input-icon">✉</span><input id="email" type="email" placeholder="you@college.edu" autocomplete="username" required></div>
         <label for="password">Password</label><div class="input-wrap"><span class="input-icon">⌑</span><input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required></div>
-        <div class="form-row"><label class="check-label"><input type="checkbox" id="remember"> <span>Remember me</span></label><span class="secure-note">● Java API connected</span></div>
-        <button class="btn btn-primary btn-wide" type="submit">Sign in <span>↗</span></button><p class="login-error" id="login-error">${esc(errorMessage)}</p>
-      </form>
-      <div class="demo-note"><span class="demo-dot"></span><div><strong>Demo accounts</strong><p>Student: student@college.edu / student123<br>Teacher: teacher@college.edu / teacher123</p></div></div>
-      <p class="login-legal">Passwords are checked by the Spring Boot API. Demo credentials are for your local mini-project.</p>
+        <div class="form-row"><label class="check-label"><input type="checkbox" id="remember"> <span>Remember me</span></label><span class="secure-note">● Secure portal</span></div>
+        <button class="btn btn-primary btn-wide" type="submit">Sign in <span>↗</span></button><p class="login-error" id="login-error" aria-live="polite">${esc(errorMessage)}</p>
+      </form>`}
+      <div class="demo-note"><span class="demo-dot"></span><div><strong>${authMode==='LOGIN'?'Existing demo accounts':(selectedRole==='TEACHER'?'Faculty registration':'Student registration')}</strong><p>${authMode==='LOGIN' ? 'Student: student@college.edu / student123<br>Teacher: teacher@college.edu / teacher123<br><br>Students and faculty can create their own account below.' : (selectedRole==='TEACHER' ? 'Use your name, college email and password. The faculty account is saved in H2 through the Java API.' : 'Use your name, roll number, college email and password. The student account is saved in H2 through the Java API.')}</p></div></div>
+      <button type="button" id="auth-mode-toggle" class="text-link" style="margin-top:12px">${authMode==='LOGIN' && selectedRole==='STUDENT'?'New student? Create an account':'Back to sign in'}</button>
+      <p class="login-legal">Passwords are checked by the Spring Boot API and stored as secure password hashes.</p>
     </div>
   </section>`;
   document.querySelectorAll('[data-role]').forEach(button => button.onclick = () => { selectedRole = button.dataset.role; loginView(); });
-  $('login-form').onsubmit = handleLogin;
+  $('auth-mode-toggle').onclick = () => { authMode = authMode==='LOGIN'?'REGISTER':'LOGIN'; loginView(); };
+  if (authMode==='REGISTER') $('register-form').onsubmit = handleRegister;
+  else $('login-form').onsubmit = handleLogin;
 }
 
 async function handleLogin(event) {
@@ -69,15 +81,46 @@ async function handleLogin(event) {
     const result = await api('/auth/login', {method:'POST', body:JSON.stringify({email, password, role:selectedRole})});
     currentUser = result;
     if (result.role === 'STUDENT') {
-      const student = students.find(s => s.email.toLowerCase() === result.email.toLowerCase());
+      if (!result.studentId) throw new Error('Student profile not found for this email.');
+      const student = students.find(s => Number(s.id) === Number(result.studentId)) || students.find(s => s.email.toLowerCase() === result.email.toLowerCase());
       if (!student) throw new Error('Student profile not found for this email.');
-      currentUser.studentId = student.id;
+      currentUser.studentId = result.studentId || student.id;
       currentUser.student = student;
     }
-    activePage = result.role === 'TEACHER' ? 'Overview' : 'Overview';
+    authMode = 'LOGIN';
+    activePage = 'Overview';
     await render();
   } catch (error) {
     $('login-error').textContent = error.message || 'Unable to sign in.';
+  }
+}
+
+async function handleRegister(event) {
+  event.preventDefault();
+  const name = $('reg-name').value.trim();
+  const rollNumber = selectedRole==='STUDENT' ? $('reg-roll').value.trim() : '';
+  const email = $('reg-email').value.trim();
+  const password = $('reg-password').value;
+  const confirmPassword = $('reg-confirm').value;
+  const error = $('register-error');
+  if (!name || (selectedRole==='STUDENT' && !rollNumber) || !email || !password || !confirmPassword) { error.textContent = 'Complete all required fields.'; return; }
+  if (password !== confirmPassword) { error.textContent = 'Passwords do not match.'; return; }
+  error.textContent = 'Creating account…';
+  try {
+    const result = await api('/auth/register', {method:'POST', body:JSON.stringify({name, rollNumber, email, password, confirmPassword, role:selectedRole})});
+    await loadMasterData();
+    currentUser = result;
+    if (result.role === 'STUDENT') {
+      currentUser.studentId = result.studentId;
+      currentUser.student = students.find(s => Number(s.id) === Number(result.studentId)) || students.find(s => s.email.toLowerCase() === result.email.toLowerCase());
+    }
+    selectedRole = result.role;
+    authMode = 'LOGIN';
+    activePage = 'Overview';
+    await render();
+    showToast('Account created successfully.');
+  } catch (apiError) {
+    error.textContent = apiError.message || 'Unable to create the account.';
   }
 }
 

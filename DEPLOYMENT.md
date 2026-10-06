@@ -30,6 +30,9 @@ Test:
 Expected JSON:
 `{"status":"UP","service":"student-attendance-api"}`
 
+Also test:
+`https://YOUR-BACKEND.onrender.com/api/subjects`
+
 ## 3. Deploy the frontend to Netlify
 
 Use Netlify's Import an existing project flow and connect the same GitHub repository.
@@ -37,37 +40,48 @@ Use Netlify's Import an existing project flow and connect the same GitHub reposi
 Netlify settings:
 - Base directory: leave blank (repository root)
 - Publish directory: `frontend`
-- Build command: use the one in `netlify.toml`, or leave it detected from the file.
+- Build command: leave blank
 
-Add a Netlify environment variable:
-`BACKEND_URL=https://YOUR-BACKEND.onrender.com`
+`netlify.toml` already contains the `/api/*` proxy to the current Render backend URL. If your Render URL changes, edit that one URL in `netlify.toml` and commit the change.
 
-Deploy. Netlify will rewrite `/api/*` requests to the Render API while keeping the browser on the Netlify domain.
+You do not need a `BACKEND_URL` environment variable for the current configuration.
 
-## 4. Friend access
+## 4. Student accounts
 
-Your friend only needs the final Netlify URL, for example:
-`https://your-project-name.netlify.app`
+The login screen includes **New student? Create an account**. A student enters:
+- Full name
+- Roll number
+- College email
+- Password
+- Confirm password
 
-They do not need VS Code, Java, Maven or H2 installed.
+The backend creates a Student profile and a STUDENT login account. Passwords are stored as BCrypt hashes, not plain text.
 
-## 5. Demo credentials
+A student can then sign in from any device using the same email and password. Their dashboard is matched to their own student profile and attendance records.
 
-Student:
-- Email: `student@college.edu`
-- Password: `student123`
+## 5. Teacher account
 
-Teacher:
-- Email: `teacher@college.edu`
-- Password: `teacher123`
+Teacher accounts remain controlled by the backend seed data. The included presentation account is:
 
-## 6. Important H2 / Render limitation
+Email: `teacher@college.edu`
+Password: `teacher123`
 
-The included Render Blueprint uses the Free web-service plan because it is convenient for a mini-project demo. Render Free web services have ephemeral local storage, so H2 data stored on the container filesystem can be lost after a restart, redeploy or spin-down. Free services also spin down after 15 minutes of inactivity and can take about a minute to start again.
+Teachers can mark attendance and view reports.
 
-For a stable project with permanent attendance data, use a managed relational database (for example Render Postgres) or move the H2 database onto a persistent disk on a paid Render service. The Java application already reads its database URL from the `DB_URL` environment variable, so that change does not require a frontend redesign.
+## 6. Demo student account
 
-## 7. Local development
+Email: `student@college.edu`
+Password: `student123`
+
+The demo account is kept so the system can be demonstrated immediately.
+
+## 7. Important H2 / Render limitation
+
+The included Render Blueprint uses the Free web-service plan because it is convenient for a mini-project demo. H2 data stored on the container filesystem can be lost after a restart, redeploy or spin-down when the service does not have persistent storage.
+
+For a stable project with permanent attendance and account data, use a managed relational database or persistent storage. The Java application reads its database URL from the `DB_URL` environment variable, so the frontend does not need to change.
+
+## 8. Local development
 
 Backend:
 ```powershell
