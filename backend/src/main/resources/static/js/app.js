@@ -155,6 +155,34 @@ function checkIn() {
   <p id="checkin-message" style="font-size:11px;color:var(--muted);margin-top:15px">Ask your teacher for today's active session code.</p></section>`;
 }
 
+async function teacherOverview() {
+  const reports = await Promise.all(subjects.map(async subject => {
+    try {
+      const rows = await api(`/attendance/report?subjectCode=${encodeURIComponent(subject.code)}`);
+      return { subject, rows };
+    } catch (error) {
+      return { subject, rows: [], error };
+    }
+  }));
+
+  const recorded = reports.flatMap(item => item.rows.filter(r => Number(r.classesHeld) > 0));
+  const totalHeld = recorded.reduce((sum, r) => sum + Number(r.classesHeld || 0), 0);
+  const totalPresent = recorded.reduce((sum, r) => sum + Number(r.classesPresent || 0), 0);
+  const overall = totalHeld ? Math.round((totalPresent / totalHeld) * 100) : 0;
+  const below75 = recorded.filter(r => Number(r.percentage) < 75).length;
+
+  const subjectCards = reports.map(({subject, rows}) => {
+    const held = rows.reduce((sum, r) => sum + Number(r.classesHeld || 0), 0);
+    const present = rows.reduce((sum, r) => sum + Number(r.classesPresent || 0), 0);
+    const pct = held ? Math.round((present / held) * 100) : 0;
+    return `<div class="subject-line"><div><strong class="subject-code">${esc(subject.code)}</strong><span class="subject-name">${esc(subject.name)}</span></div><div>${percentBar(pct)}<div style="font-size:9px;color:var(--muted);margin-top:5px">${present} / ${held} present across students</div></div><div class="percent">${pct}%</div></div>`;
+  }).join('');
+
+  return `<div class="welcome-row"><div><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<17?'afternoon':'evening'}, ${esc(currentUser.name.split(' ')[0])} 👋</h1><p>Monitor attendance, generate live session codes, and review semester reports.</p></div><button class="btn btn-primary" data-page="Attendance">Take attendance ↗</button></div>
+    <div class="stats-grid">${statCard('◉','Overall attendance',`${overall}%`,recorded.length?(below75?`${below75} student-subject record(s) below 75%`:'Current records are on track'):'No attendance recorded yet',below75?'warning':'positive')}${statCard('▤','Students',String(students.length),'Active student profiles')}${statCard('✓','Subjects',String(subjects.length),'Semester 03 · Engineering')}${statCard('!','Below 75%',String(below75),below75?'Review reports':'No low-attendance records',below75?'warning':'positive')}</div>
+    <div class="content-grid"><section class="panel"><div class="panel-head"><div><h3>Subject overview</h3><p>Aggregate attendance from saved H2 records.</p></div><span class="status neutral">LIVE DATABASE</span></div><div class="subject-list">${subjectCards}</div></section><section class="panel"><div class="panel-head"><div><h3>Teacher workspace</h3><p>Quick actions for today's classes</p></div></div><div style="padding:8px 0 18px"><p style="font-size:12px;color:var(--muted);line-height:1.7">Generate a session code from Attendance, share it with students, and their check-in will be recorded against the selected subject and date.</p><button class="btn btn-secondary btn-wide" data-page="Reports">Open attendance reports</button></div></section></div>`;
+}
+
 async function teacherAttendance() {
   const subject = window.selectedSubject || (subjects[0]?.code || 'AOA');
   const date = window.selectedDate || today();
