@@ -17,23 +17,15 @@ import java.util.NoSuchElementException;
 @CrossOrigin(origins = "*")
 public class AttendanceController {
     private final AttendanceService service;
-    private final AttendanceRepository repository;
-
-    public AttendanceController(AttendanceService service, AttendanceRepository repository) {
-        this.service = service; this.repository = repository;
-    }
+    public AttendanceController(AttendanceService service, AttendanceRepository repository) { this.service = service; }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> mark(@Valid @RequestBody AttendanceRequest request) {
         try {
             AttendanceRecord saved = service.mark(request);
-            return Map.of("id", saved.getId(), "studentId", saved.getStudent().getId(),
-                "subjectCode", saved.getSubject().getCode(), "attendanceDate", saved.getAttendanceDate(),
-                "status", saved.getStatus());
-        } catch (NoSuchElementException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
+            return Map.of("id", saved.getId(), "studentId", request.studentId(), "subjectCode", request.subjectCode(), "attendanceDate", request.attendanceDate(), "status", request.status());
+        } catch (NoSuchElementException ex) { throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage()); }
     }
 
     @GetMapping("/summary")
@@ -44,11 +36,7 @@ public class AttendanceController {
 
     @GetMapping("/report")
     public List<Map<String, Object>> report(@RequestParam String subjectCode) {
-        try {
-            return service.subjectReport(subjectCode);
-        } catch (NoSuchElementException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
+        try { return service.subjectReport(subjectCode); }
+        catch (NoSuchElementException ex) { throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage()); }
     }
-
 }

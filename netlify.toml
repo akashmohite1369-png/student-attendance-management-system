@@ -1,18 +1,17 @@
 [build]
   publish = "frontend"
 
-# Proxy API calls from the Netlify site to the public Spring Boot backend.
 [[redirects]]
   from = "/api/*"
   to = "https://student-attendance-management-system-1-2lb3.onrender.com/api/:splat"
   status = 200
   force = true
 
-# Single-page app fallback.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
 
 [[headers]]
   for = "/*"
