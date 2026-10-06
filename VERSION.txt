@@ -1,1 +1,2 @@
-Attendly Student Attendance Management System - final clean package
+Attendly Student Attendance System
+Version: 2026-10-07-netlify-fixed
